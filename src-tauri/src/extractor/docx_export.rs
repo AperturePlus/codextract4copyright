@@ -112,6 +112,12 @@ mod tests {
         let paragraph = build_code_paragraph(&lines, true);
         let xml = String::from_utf8(paragraph.build()).unwrap();
 
+        assert!(xml.contains(r#"w:rFonts"#));
+        assert!(xml.contains(r#"w:ascii="Times New Roman""#));
+        assert!(xml.contains(r#"w:hAnsi="Times New Roman""#));
+        assert!(xml.contains(r#"w:eastAsia="Times New Roman""#));
+        assert!(xml.contains(r#"w:cs="Times New Roman""#));
+        assert!(xml.contains(r#"<w:sz w:val="18" />"#));
         assert!(xml.contains(r#"w:before="0""#));
         assert!(xml.contains(r#"w:after="0""#));
         assert!(xml.contains(r#"w:line="200""#));

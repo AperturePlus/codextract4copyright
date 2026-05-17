@@ -10,6 +10,7 @@ pub const PAGE_MARGIN_LEFT_TWIPS: i32 = 1701;
 pub const PAGE_MARGIN_HEADER_TWIPS: i32 = 851;
 pub const PAGE_MARGIN_FOOTER_TWIPS: i32 = 992;
 
+pub const CODE_FONT_NAME: &str = "Times New Roman";
 pub const CODE_FONT_SIZE_HALF_POINTS: usize = 18;
 pub const CODE_LINE_HEIGHT_TWIPS: i32 = 200;
 pub const COPYRIGHT_SIDE_PAGES: usize = 30;
@@ -57,7 +58,11 @@ pub fn code_line_spacing() -> LineSpacing {
 }
 
 pub fn code_run_fonts() -> RunFonts {
-    RunFonts::new().ascii("Consolas").east_asia("微软雅黑")
+    RunFonts::new()
+        .ascii(CODE_FONT_NAME)
+        .hi_ansi(CODE_FONT_NAME)
+        .east_asia(CODE_FONT_NAME)
+        .cs(CODE_FONT_NAME)
 }
 
 #[cfg(test)]
