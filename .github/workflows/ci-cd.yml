@@ -1,0 +1,90 @@
+name: CI/CD
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build frontend
+        run: npm run build
+
+      - name: Run Rust tests
+        working-directory: src-tauri
+        run: cargo test
+
+  release:
+    name: Release
+    runs-on: windows-latest
+    needs: test
+    if: startsWith(github.ref, 'refs/tags/')
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: npm ci
+
+      - name: Build Tauri app
+        run: npm run tauri -- build
+
+      - name: Create GitHub Release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+        run: |
+          $bundleDir = "src-tauri/target/release/bundle/nsis"
+          $assets = Get-ChildItem -Path $bundleDir -File | ForEach-Object { $_.FullName }
+
+          if (-not $assets) {
+            throw "No release assets found in $bundleDir"
+          }
+
+          gh release view $env:TAG_NAME *> $null
+
+          if ($LASTEXITCODE -eq 0) {
+            gh release upload $env:TAG_NAME $assets --clobber
+          } else {
+            gh release create $env:TAG_NAME $assets `
+              --title "code-extract-v3 $env:TAG_NAME" `
+              --notes "Automated release for $env:TAG_NAME"
+          }
